@@ -1,0 +1,60 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/Memory.hdl
+
+/**
+ * The complete address space of the Hack computer's memory,
+ * including RAM and memory-mapped I/O. 
+ * The chip facilitates read and write operations, as follows:
+ *     Read:  out(t) = Memory[address(t)](t)
+ *     Write: if load(t-1) then Memory[address(t-1)](t) = in(t-1)
+ * In words: the chip always outputs the value stored at the memory 
+ * location specified by address. If load==1, the in value is loaded 
+ * into the memory location specified by address. This value becomes 
+ * available through the out output from the next time step onward.
+ * Address space rules:
+ * Only the upper 16K+8K+1 words of the Memory chip are used. 
+ * Access to address>0x6000 is invalid. Access to any address in 
+ * the range 0x4000-0x5FFF results in accessing the screen memory 
+ * map. Access to address 0x6000 results in accessing the keyboard 
+ * memory map. The behavior in these addresses is described in the 
+ * Screen and Keyboard chip specifications given in the book.
+ */
+
+CHIP Memory {
+    IN in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+// The concept:
+// The ''in'' is the data that is to be either stored in RAM or to be sent for manipulation 
+// The address specifies which memory map we need to access. Refer the data memory figure to get an idea.
+// if something needs to be stored in the ram then the most significant bit is 0 else it is 1. because 16383 bits cant be represented if MSB = 1.
+// when it is 1 then we already have 2^14 i.e 16384 which has already crossed the RAM limit. so it has to go either to the screen or keyboard
+// when it is like 11xxxxxxxxxxxxx then we already have 2^14 + 2^13 which is 24576 and it has crossed the screen memory map so this has to go to the keyboard.
+//CAUTION: all the x above must be 0 to reach the keyboard memory map else memory overflows to larger address that is not defined.
+//So there are many if else conditions in the problem so we are going to use many Mux and DMux gates.
+
+//Program starts here:
+//managing the load given according to the MSB
+DMux(in=load,sel=address[14],a=ramload,b=otherload);
+DMux(in=otherload,sel=address[13],a=screenload,b=notrequired);
+
+//Handling the screen
+Screen(in=in,load=screenload,address=address[0..12],out=screenout);
+
+//handling the RAM
+RAM16K(in=in,load=ramload,address=address[0..13], out=ramout);
+
+//Managing the keyboard and making sure that all other bits are 0 except the MSB and MSB-1 bit
+Keyboard(out=kbdout);
+Or8Way(in=address[0..7],out=firstcheck);
+Or8Way(in[0..4]=address[8..12],in[5..7]=false,out =secondcheck);
+Or(a=firstcheck,b=secondcheck,out=finalcheck);
+
+//for final output
+Mux16(a=kbdout,b=false,sel=finalcheck,out=kbdcheck);
+Mux16(a=screenout,b=kbdcheck,sel=address[13],out=eitherout);
+Mux16(a=ramout,b=eitherout,sel=address[14],out=out);
+}
