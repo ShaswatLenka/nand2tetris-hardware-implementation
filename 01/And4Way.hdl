@@ -1,0 +1,12 @@
+//This gate was explicitly created by Shaswat Lenka
+//Gate name: And4Way
+//"Computers Can change the way You live! Lets make a difference in someone else's life"
+//This is the easiest gate i have built so far!
+CHIP And4Way {
+IN a,b,c,d;
+OUT out;
+	PARTS:
+	And(a=a,b=b,out=outone);
+	And(a=c,b=d,out=outtwo);
+	And(a=outone,b=outtwo, out=out);
+}

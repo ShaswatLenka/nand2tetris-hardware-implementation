@@ -1,0 +1,22 @@
+//This chip is designed explicitly by Shaswat Lenka
+//This chip is designed to be used in making Mux4Way16 chip
+
+CHIP Mux4Way{
+	IN a,b,c,d,sel[2];
+	OUT out;
+
+	PARTS:
+	Or(a=sel[0],b=sel[1],out=orone);
+	Not(in=sel[1],out=nottwo);
+	Or(a=sel[0],b=nottwo,out=ortwo);
+	Not(in=sel[0],out=notthree);
+	Or(a=sel[1],b=notthree,out=orthree);
+	Not(in=sel[0],out=notfour);
+	Not(in=sel[1],out=notfive);
+	Or(a=notfour,b=notfive,out=orfour);
+	Or(a=orone,b=a,out=ora);
+	Or(a=ortwo,b=b,out=orb);
+	Or(a=orthree,b=c,out=orc);
+	Or(a=orfour,b=d,out=ord);
+	And4Way(a=ora,b=orb,c=orc,d=ord,out=out);
+}
